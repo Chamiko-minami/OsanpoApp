@@ -14,7 +14,7 @@ struct SeasonMonthPickerView: View {
     let allMonths = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(alignment: .leading, spacing: 24) {
             // 季節アイコン行
             HStack(spacing: 16) {
                 ForEach(Season.allCases, id: \.self) { season in
@@ -46,7 +46,6 @@ struct SeasonMonthPickerView: View {
                     }
                 }
             }
-            .padding(.leading, 8) // 左寄せ調整
 
             // 月のボタン（横並び、サイズ固定）
             ScrollView(.horizontal, showsIndicators: false) {
@@ -68,7 +67,7 @@ struct SeasonMonthPickerView: View {
                             Text(month)
                                 .font(.system(size: 14))
                                 .foregroundColor(Color(hex: "676666").opacity(isSelected ? 1.0 : 0.2))
-                                .frame(width: 48) // サイズ固定！！
+                                .frame(width: 48)
                                 .padding(.vertical, 8)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
@@ -82,9 +81,8 @@ struct SeasonMonthPickerView: View {
                         }
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 0) // ← padding調整済み
             }
         }
-        .padding(.bottom)
     }
 }

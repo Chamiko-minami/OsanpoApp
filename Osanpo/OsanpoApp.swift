@@ -6,12 +6,18 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct OsanpoApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    NotificationManager.shared.requestAuthorization()
+                    NotificationManager.shared.scheduleMonthlyReminderNotification()
+                }
         }
+        .modelContainer(for: [Place.self]) // ← これは絶対残す！（OK）
     }
 }

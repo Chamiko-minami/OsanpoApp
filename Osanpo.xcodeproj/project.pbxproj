@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		69B44FC82DE5F14000BE7C9F /* Osanpo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Osanpo.app; path = "/Users/sakaiminami/Desktop/Osanpo/build/Debug-iphoneos/Osanpo.app"; sourceTree = "<absolute>"; };
+		694A871E2DED4654003AD9D4 /* Osanpo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Osanpo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +33,7 @@
 			isa = PBXGroup;
 			children = (
 				69B450142DEBF70200BE7C9F /* Osanpo */,
+				694A871E2DED4654003AD9D4 /* Osanpo.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -58,7 +59,7 @@
 			packageProductDependencies = (
 			);
 			productName = Osanpo;
-			productReference = 69B44FC82DE5F14000BE7C9F /* Osanpo.app */;
+			productReference = 694A871E2DED4654003AD9D4 /* Osanpo.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

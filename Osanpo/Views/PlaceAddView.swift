@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct PlaceAddView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @FocusState private var isTextFieldFocused: Bool
 
     @State private var placeName: String = ""
@@ -50,7 +52,7 @@ struct PlaceAddView: View {
                                         .font(.headline)
                                         .foregroundColor(Color(hex: "3B4252"))
                                     Text("行きたい季節・月を選択")
-                                        .font(.subheadline)
+                                        .font(.footnote)
                                         .foregroundColor(.gray)
                                 }
 
@@ -70,8 +72,8 @@ struct PlaceAddView: View {
                     )
             }
         }
-        .navigationTitle("行きたい場所を登録")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true) // ← ★ 黒い < を消す
         .toolbarBackground(Color(hex: "FFF4B3").opacity(0.5), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.light, for: .navigationBar)
@@ -86,6 +88,12 @@ struct PlaceAddView: View {
                     }
                     .foregroundColor(Color(hex: "7C8894"))
                 }
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("行きたい場所を登録")
+                    .font(.headline)
+                    .foregroundColor(Color(hex: "7C8894"))
             }
 
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -104,27 +112,14 @@ struct PlaceAddView: View {
 
     private func savePlace() {
         let newPlace = Place(
-            id: UUID(),
             name: placeName,
-            seasons: selectedSeasons,
+            seasons: Array(selectedSeasons),
             months: Array(selectedMonths),
             memo: nil,
             photoData: nil,
             shouldNotify: false
         )
-
-        var currentPlaces: [Place] = []
-        if let data = UserDefaults.standard.data(forKey: "savedPlaces"),
-           let decoded = try? JSONDecoder().decode([Place].self, from: data) {
-            currentPlaces = decoded
-        }
-
-        currentPlaces.append(newPlace)
-
-        if let encoded = try? JSONEncoder().encode(currentPlaces) {
-            UserDefaults.standard.set(encoded, forKey: "savedPlaces")
-        }
-
+        modelContext.insert(newPlace)
         dismiss()
     }
 }
