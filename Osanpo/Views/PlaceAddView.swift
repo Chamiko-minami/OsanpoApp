@@ -17,6 +17,9 @@ struct PlaceAddView: View {
     @State private var selectedSeasons: Set<Season> = []
     @State private var selectedMonths: Set<String> = []
 
+    // ✅ アラート用フラグ
+    @State private var showSaveAlert = false
+
     var body: some View {
         ZStack {
             Image("sky_background")
@@ -97,7 +100,10 @@ struct PlaceAddView: View {
             }
 
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: savePlace) {
+                Button(action: {
+                    // ✅ アラート表示
+                    showSaveAlert = true
+                }) {
                     Text("保存")
                         .fontWeight(.bold)
                         .padding(.horizontal, 16)
@@ -106,6 +112,16 @@ struct PlaceAddView: View {
                         .cornerRadius(12)
                 }
                 .foregroundColor(Color(hex: "7C8894"))
+            }
+        }
+
+        // ✅ アラート（画面中央に出るタイプ → Figma通り！）
+        .alert("保存しますか？", isPresented: $showSaveAlert) {
+            Button("戻る", role: .cancel) {
+                // 何もしない（閉じるだけ）
+            }
+            Button("保存") {
+                savePlace()
             }
         }
     }

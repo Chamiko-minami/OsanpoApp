@@ -16,6 +16,9 @@ struct OsanpoApp: App {
                 .onAppear {
                     NotificationManager.shared.requestAuthorization()
                     NotificationManager.shared.scheduleMonthlyReminderNotification()
+                    
+                    // テスト通知：5秒後に通知
+                    NotificationManager.shared.scheduleTestNotification(secondsLater: 5)
                 }
         }
         .modelContainer(for: [Place.self]) // ← これは絶対残す！（OK）
