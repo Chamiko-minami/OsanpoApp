@@ -1,10 +1,16 @@
+//  PlaceDetailView.swift
+//  Osanpo
+//
+//  Created by 酒井みな実 on 2025/06/01.
+
 import SwiftUI
+import SwiftData
 
 struct PlaceDetailView: View {
     @Environment(\.dismiss) private var dismiss
     var place: Place
 
-    private let yellowHeaderHeight: CGFloat = 60  // 黄色背景の高さ
+    @State private var isEditing = false
 
     var body: some View {
         NavigationStack {
@@ -12,7 +18,7 @@ struct PlaceDetailView: View {
                 backgroundView
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Spacer().frame(height: 100) // 全体を少し下げる
+                    Spacer().frame(height: 80)
 
                     // 行きたい場所名
                     HStack(spacing: 6) {
@@ -26,92 +32,119 @@ struct PlaceDetailView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 5)
+                    .padding(.bottom, 16)
 
-                    // ZStack: 白背景 → 黄色背景 → 🗓️ テキスト
-                    ZStack(alignment: .topLeading) {
-                        // 白背景
-                        RoundedRectangle(cornerRadius: 30)
-                            .fill(Color.white.opacity(0.6))
-                            .frame(width: 340, height: 180)
-                            .padding(.top, yellowHeaderHeight / 2) // 黄色背景と半分被せる
+                    VStack(alignment: .leading, spacing: 16) {
+                        // 🗓️ いつ行きたい？
+                        titleRow(icon: "calendar", text: "いつ行きたい？", subText: "行きたい季節・月を選択")
 
-                        VStack(alignment: .leading, spacing: 16) {
-                            // 黄色背景 + 🗓️ テキスト
-                            HStack(spacing: 6) {
-                                Image(systemName: "calendar")
-                                    .foregroundColor(Color(hex: "3B4252").opacity(0.8))
-                                Text("いつ行きたい！")
-                                    .font(.headline)
-                                    .foregroundColor(Color(hex: "3B4252").opacity(0.8))
+                        // 季節アイコン
+                        HStack(spacing: 12) {
+                            ForEach(["春", "夏", "秋", "冬"], id: \.self) { season in
+                                let info = seasonColorInfo(for: season)
+                                let isSelected = place.seasons.contains(season)
+
+                                Image(info.assetName)
+                                    .resizable()
+                                    .frame(width: 44, height: 44)
+                                    .padding(6)
+                                    .background(Color(hex: info.backgroundColor).opacity(isSelected ? 1.0 : 0.3))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(isSelected ? Color(hex: info.borderColor) : .clear, lineWidth: isSelected ? 1 : 0)
+                                    )
+                                    .opacity(isSelected ? 1.0 : 0.3)
                             }
-                            .padding(.horizontal, 12)
-                            .frame(height: yellowHeaderHeight)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(hex: "FFF4B3").opacity(0.5))
-                            )
-                            // ★ 左端は白背景と揃える → padding(.leading, 24)
-                            .padding(.leading, 24)
-                            .padding(.top, 0)
+                        }
+                        .padding(.horizontal, 24)
 
-                            // 季節アイコン
-                            HStack(spacing: 12) {
-                                ForEach(["春", "夏", "秋", "冬"], id: \.self) { season in
-                                    let info = seasonColorInfo(for: season)
-                                    let isSelected = place.seasons.map { $0.rawValue }.contains(season)
+                        // 月アイコン
+                        let monthOrder = ["1月", "2月", "3月", "4月", "5月", "6月",
+                                          "7月", "8月", "9月", "10月", "11月", "12月"]
 
-                                    Image(info.assetName)
-                                        .resizable()
-                                        .frame(width: 44, height: 44)
-                                        .padding(6)
-                                        .background(Color(hex: info.backgroundColor).opacity(isSelected ? 1.0 : 0.3))
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(isSelected ? Color(hex: info.borderColor) : .clear, lineWidth: isSelected ? 1 : 0)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(monthOrder, id: \.self) { month in
+                                    let season = seasonForMonth(month)
+                                    let isSelected = place.months.contains(month)
+
+                                    Text(month)
+                                        .font(.footnote)
+                                        .foregroundColor(Color(hex: "676666").opacity(isSelected ? 1.0 : 0.3))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(Color(hex: season.backgroundColor).opacity(isSelected ? 1.0 : 0.3))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(isSelected ? Color(hex: season.borderColor) : .clear,
+                                                                lineWidth: isSelected ? 0.5 : 0)
+                                                )
                                         )
-                                        .opacity(isSelected ? 1.0 : 0.3)
                                 }
                             }
                             .padding(.horizontal, 24)
-                            .padding(.top, 16)
-
-                            // 月アイコン → 横スクロール
-                            let monthOrder = ["1月", "2月", "3月", "4月", "5月", "6月",
-                                              "7月", "8月", "9月", "10月", "11月", "12月"]
-
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(monthOrder, id: \.self) { month in
-                                        let season = seasonForMonth(month)
-                                        let isSelected = place.months.contains(month)
-
-                                        Text(month)
-                                            .font(.footnote)
-                                            .foregroundColor(Color(hex: "676666").opacity(isSelected ? 1.0 : 0.3))
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .fill(Color(hex: season.backgroundColor)
-                                                            .opacity(isSelected ? 1.0 : 0.3))
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 8)
-                                                            .stroke(isSelected ? Color(hex: season.borderColor) : .clear,
-                                                                    lineWidth: isSelected ? 0.5 : 0)
-                                                    )
-                                            )
-                                    }
-                                }
-                                .padding(.horizontal, 24)
-                            }
-
-                            Spacer(minLength: 16)
                         }
-                        .padding(.bottom, 24)
+
+                        // メモ
+                        titleRow(icon: "pencil", text: "メモ")
+
+                        ZStack(alignment: .topLeading) {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.6))
+                                .frame(height: 60)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                )
+
+                            if let memoText = place.memo, !memoText.isEmpty {
+                                Text(memoText)
+                                    .foregroundColor(Color(hex: "3B4252").opacity(0.8))
+                                    .padding(14)
+                            } else {
+                                Text("メモはありません")
+                                    .foregroundColor(Color.gray.opacity(0.6))
+                                    .padding(14)
+                            }
+                        }
+                        .padding(.horizontal, 24)
+
+                        // 写真
+                        titleRow(icon: "photo", text: "写真")
+
+                        ZStack(alignment: .center) {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.6))
+                                .frame(height: 200)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                )
+
+                            if let imageData = place.imageData,
+                               let uiImage = UIImage(data: imageData) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 180)
+                                    .cornerRadius(12)
+                                    .padding(10)
+                            } else {
+                                Text("写真はありません")
+                                    .foregroundColor(Color.gray.opacity(0.6))
+                            }
+                        }
+                        .padding(.horizontal, 24)
+
+                        Spacer(minLength: 16)
                     }
-                    // ★ 白背景の ZStack 全体 → .padding(.horizontal, 24) で白背景の左端と黄色背景の左端が揃う
-                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 30)
+                            .fill(Color.white.opacity(0.6))
+                    )
                     .padding(.horizontal, 24)
 
                     Spacer()
@@ -123,7 +156,6 @@ struct PlaceDetailView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
-                // 左：戻るボタン
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         dismiss()
@@ -136,26 +168,31 @@ struct PlaceDetailView: View {
                     }
                 }
 
-                // 中央：タイトル
                 ToolbarItem(placement: .principal) {
                     Text("行きたい場所")
                         .foregroundColor(Color(hex: "7C8894"))
                         .font(.headline)
                 }
 
-                // 右：編集ボタン
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: PlaceAddView()) {
+                    Button(action: {
+                        isEditing = true
+                    }) {
                         Text("編集")
                             .foregroundColor(Color(hex: "7C8894"))
                             .font(.body)
                     }
                 }
             }
+            .sheet(isPresented: $isEditing) {
+                PlaceEditView(place: place) {
+                    dismiss()
+                }
+            }
         }
     }
 
-    // MARK: - 背景
+    // 背景
     private var backgroundView: some View {
         Image("sky_background")
             .resizable()
@@ -163,10 +200,28 @@ struct PlaceDetailView: View {
             .ignoresSafeArea()
     }
 
-    // MARK: - 補助関数
-    private func seasonColorInfo(for season: String)
-        -> (backgroundColor: String, borderColor: String, assetName: String)
-    {
+    // タイトル行共通化
+    @ViewBuilder
+    private func titleRow(icon: String, text: String, subText: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .foregroundColor(Color(hex: "3B4252"))
+                Text(text)
+                    .font(.headline)
+                    .foregroundColor(Color(hex: "3B4252"))
+            }
+            if let sub = subText {
+                Text(sub)
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .padding(.leading, 28)
+            }
+        }
+    }
+
+    // 色設定
+    private func seasonColorInfo(for season: String) -> (backgroundColor: String, borderColor: String, assetName: String) {
         switch season {
         case "春": return ("FFD1DC", "EB8FA9", "haru_icon")
         case "夏": return ("FFF4B3", "F1C93B", "natsu_icon")
@@ -176,9 +231,7 @@ struct PlaceDetailView: View {
         }
     }
 
-    private func seasonForMonth(_ month: String)
-        -> (backgroundColor: String, borderColor: String)
-    {
+    private func seasonForMonth(_ month: String) -> (backgroundColor: String, borderColor: String) {
         switch month {
         case "3月", "4月", "5月":   return ("FFD1DC", "EB8FA9")
         case "6月", "7月", "8月":   return ("FFF4B3", "F1C93B")

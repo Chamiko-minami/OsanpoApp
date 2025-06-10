@@ -105,14 +105,14 @@ struct PlaceInputView: View {
         }
         .onAppear {
             placeName = placeToEdit.name
-            selectedSeasons = Set(placeToEdit.seasons)
+            selectedSeasons = Set(placeToEdit.seasons.compactMap { Season(rawValue: $0) })
             selectedMonths = Set(placeToEdit.months)
         }
     }
 
     private func saveChanges() {
         placeToEdit.name = placeName
-        placeToEdit.seasons = Array(selectedSeasons)
+        placeToEdit.seasons = selectedSeasons.map { $0.rawValue }
         placeToEdit.months = Array(selectedMonths)
         dismiss()
     }
