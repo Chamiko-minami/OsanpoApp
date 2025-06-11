@@ -54,9 +54,11 @@ struct PlaceListView: View {
                     .padding(.top, 84)
                     .padding(.vertical, 10)
 
-                    // 📍 行きたい場所リスト
-                    // ⭐️ ⭐️ ⭐️ 【今は確認用 → 全件表示にする！】
-                    let filteredPlaces = places
+                    // 📍 行きたい場所リスト（現在の月で絞り込み）
+                    let selectedMonth = months[currentMonthIndex]
+                    let filteredPlaces = places.filter { place in
+                        place.months.contains(selectedMonth)
+                    }
 
                     Group {
                         if filteredPlaces.isEmpty {
@@ -103,7 +105,7 @@ struct PlaceListView: View {
                 .toolbarColorScheme(.light, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
-                        Text("行きたい場所")
+                        Text("行きたい場所リスト")
                             .font(.headline)
                             .foregroundColor(Color(hex: "7C8894"))
                     }
