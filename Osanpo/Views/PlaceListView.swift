@@ -72,7 +72,7 @@ struct PlaceListView: View {
                             Spacer()
                         } else {
                             ScrollView {
-                                VStack(spacing: 12) {
+                                VStack(spacing: 3) {
                                     ForEach(filteredPlaces) { place in
                                         NavigationLink(destination: PlaceDetailView(place: place)) {
                                             HStack {

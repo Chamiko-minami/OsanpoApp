@@ -1,4 +1,3 @@
-//
 //  PlaceEditView.swift
 //  Osanpo
 //
@@ -22,6 +21,7 @@ struct PlaceEditView: View {
     @State private var selectedUIImage: UIImage? = nil
     @State private var showDeleteAlert = false
     @State private var showPhotoPicker = false
+    @FocusState private var isMemoFocused: Bool
 
     var onSave: () -> Void
 
@@ -33,48 +33,92 @@ struct PlaceEditView: View {
                     .scaledToFill()
                     .ignoresSafeArea()
 
-                VStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.75))
-                        .frame(width: 340)
-                        .overlay(
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 20) {
-                                    // 📍 行きたい場所
-                                    titleRow(icon: "mappin.and.ellipse", text: "行きたい場所")
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.75))
+                    .frame(width: 350)
+                    .overlay(
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 20) {
+                                Spacer().frame(height: 80)
 
+                                // 行きたい場所
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "mappin.and.ellipse")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                        Text("行きたい場所")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                            .font(.system(.headline, design: .rounded).weight(.bold))
+                                    }
                                     TextField("例：井の頭公園", text: $placeName)
+                                        .font(.system(.body, design: .rounded).weight(.bold))
+                                        .foregroundColor(Color(hex: "676666"))
                                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                                }
 
-                                    // 🗓️ いつ行きたい？
-                                    titleRow(icon: "calendar", text: "いつ行きたい？", subText: "行きたい季節・月を選択")
-
+                                // いつ行きたい？
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                        Image(systemName: "calendar")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                        Text("いつ行きたい？")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                            .font(.system(.headline, design: .rounded).weight(.bold))
+                                        Text("行きたい季節・月を選択")
+                                            .font(.system(.footnote, design: .rounded))
+                                            .foregroundColor(.gray)
+                                    }
                                     SeasonMonthPickerViewWrapper(
                                         selectedSeasons: $selectedSeasons,
                                         selectedMonths: $selectedMonths
                                     )
+                                }
 
-                                    // ✒️ メモ
-                                    titleRow(icon: "pencil", text: "メモ")
+                                // メモ
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "pencil")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                        Text("メモ")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                            .font(.system(.headline, design: .rounded).weight(.bold))
+                                    }
+                                    ZStack(alignment: .topLeading) {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white)
+                                            .frame(minHeight: 66)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                                            )
+                                        TextEditor(text: $memo)
+                                            .font(.system(.body, design: .rounded))
+                                            .foregroundColor(Color(hex: "676666"))
+                                            .padding(8)
+                                            .focused($isMemoFocused)
+                                        if memo.isEmpty {
+                                            Text("メモを入力")
+                                                .foregroundColor(Color(.placeholderText))
+                                                .font(.system(.body, design: .rounded))
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 8)
+                                        }
+                                    }
+                                }
 
-                                    TextEditor(text: $memo)
-                                        .frame(height: 100)
-                                        .padding(8)
-                                        .background(Color.white)
-                                        .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                                        )
-
-                                    // 📸 写真
-                                    titleRow(icon: "photo", text: "写真")
-
-                                    Button(action: {
-                                        showPhotoPicker = true
-                                    }) {
+                                // 写真
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "photo")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                        Text("写真")
+                                            .foregroundColor(Color(hex: "3B4252"))
+                                            .font(.system(.headline, design: .rounded).weight(.bold))
+                                    }
+                                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                                         HStack {
                                             Text("写真を選択")
+                                                .font(.system(.body, design: .rounded).weight(.bold))
                                                 .foregroundColor(Color(hex: "3B4252"))
                                             Spacer()
                                             Image(systemName: "chevron.right")
@@ -84,7 +128,6 @@ struct PlaceEditView: View {
                                         .background(Color.white.opacity(0.6))
                                         .cornerRadius(12)
                                     }
-                                    .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhotoItem, matching: .images)
                                     .onChange(of: selectedPhotoItem) { _, newItem in
                                         if let newItem {
                                             Task {
@@ -96,7 +139,6 @@ struct PlaceEditView: View {
                                         }
                                     }
 
-                                    // 登録済み写真があれば表示＋×ボタン
                                     if let uiImage = selectedUIImage ?? (place.imageData.flatMap { UIImage(data: $0) }) {
                                         ZStack(alignment: .topTrailing) {
                                             Image(uiImage: uiImage)
@@ -104,7 +146,6 @@ struct PlaceEditView: View {
                                                 .scaledToFit()
                                                 .frame(height: 150)
                                                 .cornerRadius(12)
-                                                .padding(.top, 4)
 
                                             Button(action: {
                                                 selectedUIImage = nil
@@ -117,35 +158,34 @@ struct PlaceEditView: View {
                                             }
                                         }
                                     }
-
-                                    Spacer(minLength: 20)
-
-                                    // 削除ボタン
-                                    Button(action: {
-                                        showDeleteAlert = true
-                                    }) {
-                                        HStack {
-                                            Image(systemName: "trash")
-                                            Text("この場所を削除")
-                                        }
-                                        .fontWeight(.bold)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .foregroundColor(Color(hex: "FF7F7F"))
-                                        .background(Color.white.opacity(0.6))
-                                        .cornerRadius(12)
-                                    }
-                                    .padding(.bottom, 16)
                                 }
-                                .padding(.horizontal, 24)
-                                .padding(.top, 32)
-                                .padding(.bottom, 40)
+
+                                Spacer(minLength: 20)
+
+                                // 削除ボタン
+                                Button(action: {
+                                    showDeleteAlert = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "trash")
+                                        Text("この場所を削除")
+                                    }
+                                    .fontWeight(.bold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .foregroundColor(Color(hex: "FF7F7F"))
+                                    .background(Color.white.opacity(0.6))
+                                    .cornerRadius(12)
+                                }
+                                .padding(.bottom, 16)
                             }
-                            .keyboardAvoiding()
-                        )
-                }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 80)
+                        }
+                        .ignoresSafeArea(.keyboard, edges: .bottom)
+                    )
             }
-            .navigationBarTitleDisplayMode(.inline) // ⭐️ これを入れる → ナビバー短くなる！！
+            .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -173,9 +213,16 @@ struct PlaceEditView: View {
                         .font(.headline)
                         .foregroundColor(Color(hex: "7C8894"))
                 }
+
+                ToolbarItemGroup(placement: .keyboard) {
+                    if isMemoFocused {
+                        Spacer()
+                        Button("完了") { isMemoFocused = false }
+                    }
+                }
             }
             .toolbarBackground(Color(hex: "FFF4B3").opacity(0.5), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar) // ⭐️ 黄色背景＋表示復活
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.light, for: .navigationBar)
             .onAppear {
                 placeName = place.name
@@ -202,41 +249,15 @@ struct PlaceEditView: View {
         place.seasons = selectedSeasons.map { $0.rawValue }
         place.months = Array(selectedMonths)
         place.memo = memo
-
         place.imageData = selectedUIImage?.jpegData(compressionQuality: 0.8)
-
         onSave()
         dismiss()
     }
 
     private func deletePlace() {
         modelContext.delete(place)
-        do {
-            try modelContext.save()
-            print("DEBUG: Place deleted")
-        } catch {
-            print("ERROR: Failed to delete Place → \(error)")
-        }
+        try? modelContext.save()
+        onSave()
         dismiss()
-    }
-
-    // タイトル行を共通化
-    @ViewBuilder
-    private func titleRow(icon: String, text: String, subText: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .foregroundColor(Color(hex: "3B4252"))
-                Text(text)
-                    .font(.headline)
-                    .foregroundColor(Color(hex: "3B4252"))
-            }
-            if let sub = subText {
-                Text(sub)
-                    .font(.footnote)
-                    .foregroundColor(.gray)
-                    .padding(.leading, 28) // ← アイコンの分だけ揃える
-            }
-        }
     }
 }

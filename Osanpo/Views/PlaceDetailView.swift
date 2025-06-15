@@ -1,8 +1,7 @@
+// PlaceDetailView.swift
+// Osanpo
 //
-//  PlaceDetailView.swift
-//  Osanpo
-//
-//  Created by 酒井みな実 on 2025/06/01.
+// Created by 酒井みな実 on 2025/06/01.
 
 import SwiftUI
 import SwiftData
@@ -89,7 +88,6 @@ struct PlaceDetailView: View {
                             }
                         }
                         .padding(.horizontal, 24)
-
                     }
                     .frame(maxWidth: 340)
                     .padding(.horizontal, 24)
@@ -137,7 +135,6 @@ struct PlaceDetailView: View {
         }
     }
 
-    // 背景
     private var backgroundView: some View {
         Image("sky_background")
             .resizable()
@@ -145,7 +142,6 @@ struct PlaceDetailView: View {
             .ignoresSafeArea()
     }
 
-    // タイトル行
     @ViewBuilder
     private func titleRow(icon: String, text: String, subText: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -162,17 +158,6 @@ struct PlaceDetailView: View {
                     .foregroundColor(.gray)
                     .padding(.leading, 28)
             }
-        }
-    }
-
-    // 色設定
-    private func seasonColorInfo(for season: String) -> (backgroundColor: String, borderColor: String, assetName: String) {
-        switch season {
-        case "春": return ("FFD1DC", "EB8FA9", "haru_icon")
-        case "夏": return ("FFF4B3", "F1C93B", "natsu_icon")
-        case "秋": return ("FFC8A2", "E38B4D", "aki_icon")
-        case "冬": return ("A6D8E4", "6BAACD", "fuyu_icon")
-        default:   return ("CCCCCC", "999999", "")
         }
     }
 }

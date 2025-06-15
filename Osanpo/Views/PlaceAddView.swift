@@ -8,35 +8,12 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
-import Combine
-
-/// キーボードの高さを監視するヘルパー
-final class KeyboardResponder: ObservableObject {
-    @Published var currentHeight: CGFloat = 0
-    private var cancellableSet: Set<AnyCancellable> = []
-    
-    init() {
-        let willShow = NotificationCenter.default
-            .publisher(for: UIResponder.keyboardWillShowNotification)
-            .compactMap { $0.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect }
-            .map { $0.height }
-        
-        let willHide = NotificationCenter.default
-            .publisher(for: UIResponder.keyboardWillHideNotification)
-            .map { _ in CGFloat(0) }
-        
-        Publishers.Merge(willShow, willHide)
-            .receive(on: RunLoop.main)
-            .assign(to: \.currentHeight, on: self)
-            .store(in: &cancellableSet)
-    }
-}
 
 struct PlaceAddView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    // フォーカス状態
+    // フォーカス管理
     @FocusState private var isTextFieldFocused: Bool
     @FocusState private var isMemoFocused: Bool
 
@@ -49,9 +26,6 @@ struct PlaceAddView: View {
     @State private var selectedUIImage: UIImage? = nil
     @State private var showSaveAlert = false
 
-    // キーボード監視
-    @StateObject private var keyboard = KeyboardResponder()
-
     var body: some View {
         NavigationStack {
             ZStack {
@@ -61,17 +35,17 @@ struct PlaceAddView: View {
                     .scaledToFill()
                     .ignoresSafeArea()
 
-                // メインカード
+                // カード
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.white.opacity(0.75))
                     .frame(width: 350)
-                    .overlay {
+                    .overlay(
                         ScrollView {
                             VStack(alignment: .leading, spacing: 20) {
                                 Spacer().frame(height: 80)
 
                                 // MARK: 行きたい場所
-                                VStack(alignment: .leading, spacing: 20) {
+                                VStack(alignment: .leading, spacing: 10) {
                                     HStack(spacing: 4) {
                                         Image(systemName: "mappin.and.ellipse")
                                             .foregroundColor(Color(hex: "3B4252"))
@@ -79,14 +53,16 @@ struct PlaceAddView: View {
                                             .foregroundColor(Color(hex: "3B4252"))
                                             .font(.system(.headline, design: .rounded).weight(.bold))
                                     }
+                                    .ignoresSafeArea(.keyboard, edges: .bottom)
                                     TextField("例：井の頭公園", text: $placeName)
                                         .font(.system(.body, design: .rounded).weight(.bold))
+                                        .foregroundColor(Color(hex: "676666"))   // ← 入力文字色
                                         .textFieldStyle(RoundedBorderTextFieldStyle())
                                         .focused($isTextFieldFocused)
                                 }
 
                                 // MARK: いつ行きたい？
-                                VStack(alignment: .leading, spacing: 20) {
+                                VStack(alignment: .leading, spacing: 10) {
                                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                                         Image(systemName: "calendar")
                                             .foregroundColor(Color(hex: "3B4252"))
@@ -104,7 +80,7 @@ struct PlaceAddView: View {
                                 }
 
                                 // MARK: メモ
-                                VStack(alignment: .leading, spacing: 20) {
+                                VStack(alignment: .leading, spacing: 10) {
                                     HStack(spacing: 4) {
                                         Image(systemName: "pencil")
                                             .foregroundColor(Color(hex: "3B4252"))
@@ -113,6 +89,7 @@ struct PlaceAddView: View {
                                             .font(.system(.headline, design: .rounded).weight(.bold))
                                     }
                                     ZStack(alignment: .topLeading) {
+                                        // 枠
                                         RoundedRectangle(cornerRadius: 12)
                                             .fill(Color.white)
                                             .frame(minHeight: 66)
@@ -121,11 +98,14 @@ struct PlaceAddView: View {
                                                     .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                                             )
 
+                                        // 実際のエディタ
                                         TextEditor(text: $memo)
                                             .font(.system(.body, design: .rounded))
+                                            .foregroundColor(Color(hex: "676666"))  // ← 入力文字色
                                             .padding(8)
                                             .focused($isMemoFocused)
 
+                                        // placeholder
                                         if memo.isEmpty {
                                             Text("メモを入力")
                                                 .foregroundColor(Color(.placeholderText))
@@ -137,7 +117,7 @@ struct PlaceAddView: View {
                                 }
 
                                 // MARK: 写真
-                                VStack(alignment: .leading, spacing: 20) {
+                                VStack(alignment: .leading, spacing: 10) {
                                     HStack(spacing: 4) {
                                         Image(systemName: "photo")
                                             .foregroundColor(Color(hex: "3B4252"))
@@ -168,7 +148,6 @@ struct PlaceAddView: View {
                                             }
                                         }
                                     }
-
                                     if let image = selectedUIImage {
                                         ZStack(alignment: .topTrailing) {
                                             Image(uiImage: image)
@@ -192,43 +171,46 @@ struct PlaceAddView: View {
                                 Spacer(minLength: 20)
                             }
                             .padding(.horizontal, 16)
-                            // キーボードの高さ分、余白を底に追加
-                            .padding(.bottom, keyboard.currentHeight)
+                            .padding(.bottom, 80)
                         }
-                    }
+                        // キーボードで全体が持ち上がらないように
+                        .ignoresSafeArea(.keyboard, edges: .bottom)
+                    )
             }
-            // ナビバー
-            .navigationBarTitle("行きたい場所を登録", displayMode: .inline)
+            // ナビバー設定
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color(hex: "FFF4B3").opacity(0.5), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.light, for: .navigationBar)
+            .toolbarBackground(.visible,              for: .navigationBar)
+            .toolbarColorScheme(.light,              for: .navigationBar)
             .toolbar {
-                // 戻る
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
+                                .foregroundColor(Color(hex: "7C8894"))
                             Text("リスト")
                                 .foregroundColor(Color(hex: "7C8894"))
                                 .font(.system(.body, design: .rounded).weight(.bold))
                         }
                     }
                 }
-                // 保存
+                ToolbarItem(placement: .principal) {
+                    Text("行きたい場所を登録")
+                        .foregroundColor(Color(hex: "7C8894"))
+                        .font(.system(.headline, design: .rounded).weight(.bold))
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { savePlace() } label: {
                         Text("保存")
                             .foregroundColor(Color(hex: "7C8894"))
-                            .font(.system(.body, design: .rounded).weight(.bold))
+                            .font(.system(.body,   design: .rounded).weight(.bold))
                     }
                 }
-                // メモ入力時のみ「完了」キー
+                // メモ入力用のDone ボタン
                 ToolbarItemGroup(placement: .keyboard) {
                     if isMemoFocused {
                         Spacer()
-                        Button("完了") {
-                            isMemoFocused = false
-                        }
+                        Button("完了") { isMemoFocused = false }
                     }
                 }
             }
@@ -247,7 +229,6 @@ struct PlaceAddView: View {
         }
     }
 
-    // 保存処理
     private func savePlace() {
         if placeName.isEmpty || selectedSeasons.isEmpty || selectedMonths.isEmpty {
             showSaveAlert = true
